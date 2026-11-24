@@ -1,0 +1,6 @@
+{
+  "name": "UPA Parceiros & Administração",
+  "description": "Portal oficial de afiliados, parceiros de frota, solicitação de credenciais e área administrativa de motoristas da UPA Mobilidade Angola.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

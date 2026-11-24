@@ -1,0 +1,407 @@
+{
+  "entities": {
+    "AdminAccount": {
+      "title": "AdminAccount",
+      "description": "Authorized administrator account for the UPA Mobilidade Angola console.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the administrator."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Verified administrator email address."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100,
+          "description": "Full name of the administrator."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["super_admin", "operacoes", "suporte"],
+          "description": "Administrative permission tier."
+        },
+        "city": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Operational hub city (e.g., Huambo)."
+        },
+        "addedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID of the administrator who granted access."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        }
+      },
+      "required": ["uid", "email", "fullName", "role", "city", "addedBy", "createdAt"]
+    },
+    "Driver": {
+      "title": "Driver",
+      "description": "Registered UPA Mobilidade Angola driver and vehicle record.",
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100,
+          "description": "Driver full legal name."
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 30,
+          "pattern": "^\\+?[0-9\\s\\-()]{6,25}$",
+          "description": "Angolan contact phone number."
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Optional driver email address."
+        },
+        "biNumber": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 30,
+          "pattern": "^[a-zA-Z0-9\\-]+$",
+          "description": "Bilhete de Identidade (BI) number."
+        },
+        "licenseNumber": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 40,
+          "description": "Carta de Condução number."
+        },
+        "serviceCategory": {
+          "type": "string",
+          "enum": ["UPA Ride", "UPA Delivery", "UPA Moto", "UPA Driver", "UPA Van", "UPA Business"],
+          "description": "Assigned UPA service category."
+        },
+        "vehicleMakeModel": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Vehicle make and model."
+        },
+        "vehiclePlate": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 20,
+          "description": "Vehicle registration plate (matrícula)."
+        },
+        "vehicleYear": {
+          "type": "integer",
+          "description": "Vehicle manufacturing year."
+        },
+        "municipality": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Primary operating municipality in Huambo or expansion region."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ativo", "pendente", "em_verificacao", "suspenso"],
+          "description": "Current verification and operational status."
+        },
+        "partnerCode": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Optional affiliate or fleet partner referral code."
+        },
+        "documentsVerified": {
+          "type": "boolean",
+          "description": "Whether in-person Cidade Alta document verification is complete."
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Administrative verification notes."
+        },
+        "createdByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID of the admin who registered the driver."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp."
+        }
+      },
+      "required": [
+        "fullName",
+        "phone",
+        "email",
+        "biNumber",
+        "licenseNumber",
+        "serviceCategory",
+        "vehicleMakeModel",
+        "vehiclePlate",
+        "vehicleYear",
+        "municipality",
+        "status",
+        "partnerCode",
+        "documentsVerified",
+        "notes",
+        "createdByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CredentialRequest": {
+      "title": "CredentialRequest",
+      "description": "Access and credential request submitted by prospective affiliates, fleet partners, or operations staff.",
+      "type": "object",
+      "properties": {
+        "applicantUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Authenticated Firebase UID of the requester."
+        },
+        "applicantEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Verified email address of the requester."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100,
+          "description": "Full name of the requester."
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 30,
+          "pattern": "^\\+?[0-9\\s\\-()]{6,25}$",
+          "description": "Angolan contact phone number."
+        },
+        "documentId": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 30,
+          "description": "BI or NIF identification number."
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Company or fleet name, if applicable."
+        },
+        "requestedRole": {
+          "type": "string",
+          "enum": ["parceiro_frota", "afiliado_comercial", "gestor_ponto", "admin_operacoes"],
+          "description": "Requested portal access role."
+        },
+        "municipality": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Municipality or province of operation."
+        },
+        "fleetSize": {
+          "type": "integer",
+          "description": "Number of vehicles managed or projected monthly driver referrals."
+        },
+        "motivation": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 600,
+          "description": "Context and justification for credential issuance."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pendente", "em_analise", "aprovado", "rejeitado"],
+          "description": "Review status controlled by administrators."
+        },
+        "issuedCredentialCode": {
+          "type": "string",
+          "maxLength": 40,
+          "description": "Issued partner/credential code upon approval."
+        },
+        "reviewNotes": {
+          "type": "string",
+          "maxLength": 400,
+          "description": "Administrator review feedback."
+        },
+        "reviewedByUid": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "UID of reviewing administrator."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "applicantUid",
+        "applicantEmail",
+        "fullName",
+        "phone",
+        "documentId",
+        "companyName",
+        "requestedRole",
+        "municipality",
+        "fleetSize",
+        "motivation",
+        "status",
+        "issuedCredentialCode",
+        "reviewNotes",
+        "reviewedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PartnerAffiliate": {
+      "title": "PartnerAffiliate",
+      "description": "Approved affiliate, fleet partner, or UPA support hub representative.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Linked Firebase UID if registered via credential request."
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 100,
+          "description": "Partner full name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 5,
+          "maxLength": 160,
+          "description": "Partner email address."
+        },
+        "phone": {
+          "type": "string",
+          "minLength": 6,
+          "maxLength": 30,
+          "pattern": "^\\+?[0-9\\s\\-()]{6,25}$",
+          "description": "Partner contact phone."
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Organization or fleet name."
+        },
+        "partnerType": {
+          "type": "string",
+          "enum": ["parceiro_frota", "afiliado_comercial", "gestor_ponto"],
+          "description": "Partner program category."
+        },
+        "referralCode": {
+          "type": "string",
+          "minLength": 4,
+          "maxLength": 32,
+          "pattern": "^[A-Z0-9\\-]+$",
+          "description": "Unique partner referral and tracking code."
+        },
+        "municipality": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80,
+          "description": "Primary operating municipality."
+        },
+        "commissionTier": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 40,
+          "description": "Partner commission or fee structure."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ativo", "pendente", "suspenso"],
+          "description": "Partner account status."
+        },
+        "referredDriversCount": {
+          "type": "integer",
+          "description": "Count of active drivers linked to this partner."
+        },
+        "createdByUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "UID of admin who created or approved this partner."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "fullName",
+        "email",
+        "phone",
+        "companyName",
+        "partnerType",
+        "referralCode",
+        "municipality",
+        "commissionTier",
+        "status",
+        "referredDriversCount",
+        "createdByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminAccount" },
+      "description": "Authorized UPA system administrators."
+    },
+    "/drivers/{driverId}": {
+      "schema": { "$ref": "#/entities/Driver" },
+      "description": "Registered drivers and vehicles managed by UPA administrators."
+    },
+    "/credential_requests/{requestId}": {
+      "schema": { "$ref": "#/entities/CredentialRequest" },
+      "description": "Credential requests from prospective partners, affiliates, and operations staff."
+    },
+    "/partners/{partnerId}": {
+      "schema": { "$ref": "#/entities/PartnerAffiliate" },
+      "description": "Approved affiliates, fleet partners, and support hub managers."
+    }
+  }
+}

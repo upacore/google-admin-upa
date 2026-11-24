@@ -1,0 +1,248 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Hardened Helpers
+    // -------------------------------------------------------------------------
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isBootstrapAdmin() {
+      return isVerified() && request.auth.token.email == 'upacloud.config@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // -------------------------------------------------------------------------
+    // Entity Validation Blueprints
+    // -------------------------------------------------------------------------
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['uid', 'email', 'fullName', 'role', 'city', 'addedBy', 'createdAt'])
+        && data.keys().hasOnly(['uid', 'email', 'fullName', 'role', 'city', 'addedBy', 'createdAt'])
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 100
+        && data.role in ['super_admin', 'operacoes', 'suporte']
+        && data.city is string && data.city.size() >= 2 && data.city.size() <= 80
+        && data.addedBy is string && data.addedBy.size() >= 1 && data.addedBy.size() <= 128
+        && data.createdAt is timestamp;
+    }
+
+    function isValidDriver(data) {
+      return data.keys().hasAll([
+          'fullName', 'phone', 'email', 'biNumber', 'licenseNumber',
+          'serviceCategory', 'vehicleMakeModel', 'vehiclePlate', 'vehicleYear',
+          'municipality', 'status', 'partnerCode', 'documentsVerified', 'notes',
+          'createdByUid', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'fullName', 'phone', 'email', 'biNumber', 'licenseNumber',
+          'serviceCategory', 'vehicleMakeModel', 'vehiclePlate', 'vehicleYear',
+          'municipality', 'status', 'partnerCode', 'documentsVerified', 'notes',
+          'createdByUid', 'createdAt', 'updatedAt'
+        ])
+        && data.fullName is string && data.fullName.size() >= 3 && data.fullName.size() <= 100
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 30 && data.phone.matches('^\\+?[0-9\\s\\-()]{6,25}$')
+        && data.email is string && data.email.size() <= 160
+        && data.biNumber is string && data.biNumber.size() >= 5 && data.biNumber.size() <= 30 && data.biNumber.matches('^[a-zA-Z0-9\\-]+$')
+        && data.licenseNumber is string && data.licenseNumber.size() >= 3 && data.licenseNumber.size() <= 40
+        && data.serviceCategory in ['UPA Ride', 'UPA Delivery', 'UPA Moto', 'UPA Driver', 'UPA Van', 'UPA Business']
+        && data.vehicleMakeModel is string && data.vehicleMakeModel.size() >= 2 && data.vehicleMakeModel.size() <= 80
+        && data.vehiclePlate is string && data.vehiclePlate.size() >= 3 && data.vehiclePlate.size() <= 20
+        && data.vehicleYear is int && data.vehicleYear >= 2000 && data.vehicleYear <= 2030
+        && data.municipality is string && data.municipality.size() >= 2 && data.municipality.size() <= 80
+        && data.status in ['ativo', 'pendente', 'em_verificacao', 'suspenso']
+        && data.partnerCode is string && data.partnerCode.size() <= 32
+        && data.documentsVerified is bool
+        && data.notes is string && data.notes.size() <= 500
+        && data.createdByUid is string && data.createdByUid.size() >= 1 && data.createdByUid.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCredentialRequest(data) {
+      return data.keys().hasAll([
+          'applicantUid', 'applicantEmail', 'fullName', 'phone', 'documentId',
+          'companyName', 'requestedRole', 'municipality', 'fleetSize', 'motivation',
+          'status', 'issuedCredentialCode', 'reviewNotes', 'reviewedByUid',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'applicantUid', 'applicantEmail', 'fullName', 'phone', 'documentId',
+          'companyName', 'requestedRole', 'municipality', 'fleetSize', 'motivation',
+          'status', 'issuedCredentialCode', 'reviewNotes', 'reviewedByUid',
+          'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.applicantUid)
+        && data.applicantEmail is string && data.applicantEmail.size() >= 5 && data.applicantEmail.size() <= 160
+        && data.fullName is string && data.fullName.size() >= 3 && data.fullName.size() <= 100
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 30 && data.phone.matches('^\\+?[0-9\\s\\-()]{6,25}$')
+        && data.documentId is string && data.documentId.size() >= 5 && data.documentId.size() <= 30
+        && data.companyName is string && data.companyName.size() <= 100
+        && data.requestedRole in ['parceiro_frota', 'afiliado_comercial', 'gestor_ponto', 'admin_operacoes']
+        && data.municipality is string && data.municipality.size() >= 2 && data.municipality.size() <= 80
+        && data.fleetSize is int && data.fleetSize >= 0 && data.fleetSize <= 500
+        && data.motivation is string && data.motivation.size() >= 10 && data.motivation.size() <= 600
+        && data.status in ['pendente', 'em_analise', 'aprovado', 'rejeitado']
+        && data.issuedCredentialCode is string && data.issuedCredentialCode.size() <= 40
+        && data.reviewNotes is string && data.reviewNotes.size() <= 400
+        && data.reviewedByUid is string && data.reviewedByUid.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPartner(data) {
+      return data.keys().hasAll([
+          'uid', 'fullName', 'email', 'phone', 'companyName', 'partnerType',
+          'referralCode', 'municipality', 'commissionTier', 'status',
+          'referredDriversCount', 'createdByUid', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'fullName', 'email', 'phone', 'companyName', 'partnerType',
+          'referralCode', 'municipality', 'commissionTier', 'status',
+          'referredDriversCount', 'createdByUid', 'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() <= 128
+        && data.fullName is string && data.fullName.size() >= 3 && data.fullName.size() <= 100
+        && data.email is string && data.email.size() >= 5 && data.email.size() <= 160
+        && data.phone is string && data.phone.size() >= 6 && data.phone.size() <= 30 && data.phone.matches('^\\+?[0-9\\s\\-()]{6,25}$')
+        && data.companyName is string && data.companyName.size() <= 100
+        && data.partnerType in ['parceiro_frota', 'afiliado_comercial', 'gestor_ponto']
+        && data.referralCode is string && data.referralCode.size() >= 4 && data.referralCode.size() <= 32 && data.referralCode.matches('^[A-Z0-9\\-]+$')
+        && data.municipality is string && data.municipality.size() >= 2 && data.municipality.size() <= 80
+        && data.commissionTier is string && data.commissionTier.size() >= 2 && data.commissionTier.size() <= 40
+        && data.status in ['ativo', 'pendente', 'suspenso']
+        && data.referredDriversCount is int && data.referredDriversCount >= 0 && data.referredDriversCount <= 10000
+        && data.createdByUid is string && data.createdByUid.size() >= 1 && data.createdByUid.size() <= 128
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && (isAdmin() || (isSignedIn() && request.auth.uid == adminId));
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && isValidId(adminId)
+        && isValidAdmin(incoming())
+        && incoming().uid == adminId
+        && incoming().createdAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(adminId)
+        && isValidAdmin(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'role', 'city']);
+      allow delete: if isAdmin() && isValidId(adminId) && adminId != request.auth.uid;
+    }
+
+    match /drivers/{driverId} {
+      allow get: if isValidId(driverId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin()
+        && isValidId(driverId)
+        && isValidDriver(incoming())
+        && incoming().createdByUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(driverId)
+        && isValidDriver(incoming())
+        && incoming().createdByUid == existing().createdByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'fullName', 'phone', 'email', 'biNumber', 'licenseNumber',
+          'serviceCategory', 'vehicleMakeModel', 'vehiclePlate', 'vehicleYear',
+          'municipality', 'status', 'partnerCode', 'documentsVerified', 'notes', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(driverId);
+    }
+
+    match /credential_requests/{requestId} {
+      allow get: if isValidId(requestId) && (
+        isAdmin() || (isSignedIn() && existing().applicantUid == request.auth.uid)
+      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.applicantUid == request.auth.uid);
+      allow create: if isSignedIn()
+        && isValidId(requestId)
+        && isValidCredentialRequest(incoming())
+        && incoming().applicantUid == request.auth.uid
+        && incoming().applicantEmail == request.auth.token.email
+        && incoming().status == 'pendente'
+        && incoming().issuedCredentialCode == ''
+        && incoming().reviewNotes == ''
+        && incoming().reviewedByUid == ''
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(requestId)
+        && isValidCredentialRequest(incoming())
+        && incoming().applicantUid == existing().applicantUid
+        && incoming().applicantEmail == existing().applicantEmail
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'status', 'issuedCredentialCode', 'reviewNotes', 'reviewedByUid', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(requestId);
+    }
+
+    match /partners/{partnerId} {
+      allow get: if isValidId(partnerId) && (
+        isAdmin()
+        || (isSignedIn() && existing().uid != '' && existing().uid == request.auth.uid)
+        || (isVerified() && existing().email == request.auth.token.email)
+      );
+      allow list: if isAdmin()
+        || (isSignedIn() && resource.data.uid != '' && resource.data.uid == request.auth.uid)
+        || (isVerified() && resource.data.email == request.auth.token.email);
+      allow create: if isAdmin()
+        && isValidId(partnerId)
+        && isValidPartner(incoming())
+        && incoming().createdByUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isAdmin()
+        && isValidId(partnerId)
+        && isValidPartner(incoming())
+        && incoming().createdByUid == existing().createdByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'uid', 'fullName', 'email', 'phone', 'companyName', 'partnerType',
+          'referralCode', 'municipality', 'commissionTier', 'status',
+          'referredDriversCount', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(partnerId);
+    }
+  }
+}
